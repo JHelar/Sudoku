@@ -25,22 +25,19 @@ namespace Sudoku
     public partial class MainForm : Form
     {
         List<List<List<List<Button>>>> buttons;
-        List<Button> buttonsLeft;
-        List<List<CheckButton>> checkButtons;
         Button currButton;
         Button oldButton;
 
         public MainForm()
         {
             currButton = new Button();
-
-            checkButtons = new List<List<CheckButton>>();
             buttons = new List<List<List<List<Button>>>>();
-            buttonsLeft = new List<Button>();
             List<List<List<Button>>> buttonsRow = new List<List<List<Button>>>();
             List<List<Button>> buttonSquare = new List<List<Button>>();
             List<Button> buttonSquareRow = new List<Button>();
             Button tempButton = new Button();
+            List<string> rsL = new List<string>();
+            List<string> csL = new List<string>();
 
             MenuStrip ms = new MenuStrip();
             ms.Parent = this;
@@ -58,6 +55,14 @@ namespace Sudoku
             MainMenuStrip = ms;
 
             InitializeComponent();
+
+            rsL.Add("ABC");
+            rsL.Add("DEF");
+            rsL.Add("GHI");
+            csL.Add("123");
+            csL.Add("456");
+            csL.Add("789");
+
             for (int l = 0; l < 3; l++)
             {
                 for (int i = 0; i < 3; i++)
@@ -70,7 +75,7 @@ namespace Sudoku
                             tempButton.Size = new Size(40, 40);
                             tempButton.Parent = this;
                             tempButton.Click += new EventHandler(button_click);
-                            tempButton.Name = l + ":" + i + ":" + j + ":" + k;
+                            tempButton.Name = rsL[l][j].ToString() + csL[i][k].ToString();
                             tempButton.Text = "";
                             buttonSquareRow.Add(tempButton);
                             tempButton = new Button();
@@ -83,16 +88,6 @@ namespace Sudoku
                 }
                 buttons.Add(buttonsRow);
                 buttonsRow = new List<List<List<Button>>>();
-            }
-            List<CheckButton> cbl = new List<CheckButton>();
-            for (int i = 1; i <= 9; i++) 
-            {
-                for (int j = 0; j < 9; j++) 
-                {
-                    cbl.Add(new CheckButton(i));
-                }
-                checkButtons.Add(cbl);
-                cbl = new List<CheckButton>();
             }
         }
 
@@ -165,168 +160,42 @@ namespace Sudoku
         #region Backtracking and solving
         void solve()
         {
-            Constraints csp = new Constraints();
-            for (int i = 0; i < buttons.Count; i++)
+            BackTrackSolver BTS = new BackTrackSolver();
+            setButtons(BTS.solve(buttons));
+            MessageBox.Show("Solve DONE!");
+        }
+
+        void setButtons(Dictionary<string, string> values) 
+        {
+            bool breakFlag = new bool();
+
+            foreach (string key in values.Keys)
             {
-                for (int j = 0; j < buttons[i].Count; j++)
+                breakFlag = false;
+                for (int i = 0; i < buttons.Count; i++)
                 {
-                    for (int k = 0; k < buttons[i][j].Count; k++)
+                    for (int j = 0; j < buttons[i].Count; j++)
                     {
-                        for (int l = 0; l < buttons[i][j][k].Count; l++)
+                        for (int k = 0; k < buttons[i][j].Count; k++)
                         {
-                            if (buttons[i][j][k][l].Text == "")
-                                buttonsLeft.Add(buttons[i][j][k][l]);
-                            else
-                                checkButtons[Convert.ToInt32(buttons[i][j][k][l].Text) - 1].RemoveAt(checkButtons[Convert.ToInt32(buttons[i][j][k][l].Text) - 1].Count - 1);
+                            for (int l = 0; l < buttons[i][j][k].Count; l++)
+                            {
+                                if (buttons[i][j][k][l].Name == key)
+                                {
+                                    buttons[i][j][k][l].Text = values[key];
+                                    breakFlag = true;
+                                    break;
+                                }
+                            }
+                            if (breakFlag)
+                                break;
                         }
+                        if (breakFlag)
+                            break;
                     }
+                    if (breakFlag)
+                        break;
                 }
-            }
-            Dictionary<string, CheckButton> assignment = new Dictionary<string, CheckButton>();
-            backtrack(csp, assignment);
-            setAssignment(assignment);
-        }
-
-        List<Button> buttonList(CheckButton CB, Constraints csp, Dictionary<string, CheckButton> assignment)
-        {
-            List<Button> returnList = new List<Button>();
-            Button tempBtn = new Button();
-
-            foreach (Button btnLeft in buttonsLeft)
-            {
-                tempBtn.Name = btnLeft.Name;
-                tempBtn.Text = Convert.ToString(CB.number);
-                if (csp.checkConstraints(buttons, tempBtn, assignment))
-                {
-                    returnList.Add(btnLeft);
-                }
-                tempBtn = new Button();
-            }
-            return returnList;
-        }
-
-        void assign(CheckButton CB, Button btn, Dictionary<string, CheckButton> ass)
-        {
-            ass[btn.Name] = CB;
-            buttonsLeft.Remove(btn);
-        }
-
-        void unAssign(Button btn, Dictionary<string, CheckButton> ass)
-        {
-            ass.Remove(btn.Name);
-            buttonsLeft.Add(btn);
-        }
-
-        void findPotentials(Constraints csp, Dictionary<string, CheckButton> ass)
-        {
-            for (int i = 0; i < checkButtons.Count; i++)
-            {
-                foreach (CheckButton potential in checkButtons[i])
-                {
-                    potential.potentialButtons = buttonList(potential, csp, ass);
-                }
-            }
-        }
-
-        CheckButton mostConstrainedVariable(Constraints csp, Dictionary<string, CheckButton> ass)
-        {
-            int count = 100000;
-            int cbRowIndx = 0;
-            CheckButton CBToReturn = new CheckButton();
-            findPotentials(csp, ass);
-
-            for (int i = 0; i < checkButtons.Count; i++)
-            {
-                foreach (CheckButton CB in checkButtons[i])
-                {
-                    if (CB.potentialButtons.Count < count)
-                    {
-                        count = CB.potentialButtons.Count;
-                        CBToReturn = CB;
-                        cbRowIndx = i;
-                    }
-                }
-            }
-            checkButtons[cbRowIndx].Remove(CBToReturn);
-            return CBToReturn;
-        }
-
-        Button leastConstrainingVal(CheckButton CB, Constraints csp, Dictionary<string, CheckButton> ass)
-        {
-            Button btnToReturn = new Button();
-            Dictionary<string, CheckButton> tempAss = new Dictionary<string,CheckButton>(ass);
-            btnToReturn.Text = "None";
-            int bestBtnCount = 0;
-            int possibleBtnCount = 0;
-
-            if (CB.potentialButtons.Count == 0)
-                return btnToReturn;
-            else if (buttonsLeft.Count == 0)
-                return CB.potentialButtons.Pop();
-            foreach (Button pbtn in CB.potentialButtons)
-            {
-                possibleBtnCount = 0;
-                assign(CB, pbtn, tempAss);
-                for (int i = 0; i < checkButtons.Count; i++)
-                {
-                    foreach (CheckButton affectedBtn in checkButtons[i])
-                    {
-                        List<Button> tempAffectBtn = buttonList(affectedBtn, csp, tempAss);
-                        possibleBtnCount += tempAffectBtn.Count;
-                        if (possibleBtnCount > bestBtnCount)
-                        {
-                            bestBtnCount = possibleBtnCount;
-                            btnToReturn = pbtn;
-                            btnToReturn.Text = "";
-                        }
-                    }
-                }
-                unAssign(pbtn,tempAss);
-            }
-            if (bestBtnCount == 0)
-                return btnToReturn;
-            CB.potentialButtons.Remove(btnToReturn);
-            return btnToReturn;
-        }
-
-        bool backtrack(Constraints csp, Dictionary<string, CheckButton> assignment)
-        {
-            if (checkButtonsEmpty())
-                return true;
-            CheckButton currCB = mostConstrainedVariable(csp, assignment);
-            Button currBtn = leastConstrainingVal(currCB, csp, assignment);
-            Button prevCurrBtn = currBtn;
-            while (currBtn.Text != "None")
-            {
-                assign(currCB, currBtn, assignment);
-                bool result = backtrack(csp, assignment);
-                if (!result)
-                    return result;
-                unAssign(currBtn, assignment);
-                prevCurrBtn = currBtn;
-                currBtn = leastConstrainingVal(currCB, csp, assignment);
-            }
-            if(prevCurrBtn.Text != "None")
-                checkButtons[Convert.ToInt32(prevCurrBtn.Text) - 1].Add(currCB);
-            return false;
-        }
-
-        bool checkButtonsEmpty() 
-        {
-            for (int i = 0; i < checkButtons.Count; i++) 
-            {
-                if (checkButtons[i].Count != 0)
-                    return false;
-            }
-            return true;
-        }
-
-        void setAssignment(Dictionary<string, CheckButton> assignment) 
-        {
-            foreach (string location in assignment.Keys)
-            {
-                string[] tl = location.Split(':');
-                buttons[Convert.ToInt32(tl[0])][Convert.ToInt32(tl[1])][Convert.ToInt32(tl[2])][Convert.ToInt32(tl[3])].Text = Convert.ToString(assignment[location].number);
             }
         }
         #endregion

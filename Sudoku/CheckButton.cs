@@ -14,19 +14,13 @@ namespace Sudoku
 {
     class CheckButton
     {
-        public int number;
-        public List<Button> potentialButtons;
+        public List<string> potential;
+        public string name;
+        public string buttonId;
 
         public CheckButton() 
         {
-            this.number = 1;
-            potentialButtons = new List<Button>();
-        }
-
-        public CheckButton(int number) 
-        {
-            this.number = number;
-            potentialButtons = new List<Button>();
+            potential = new List<string>();
         }
     }
 }
