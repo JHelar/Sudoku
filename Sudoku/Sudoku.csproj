@@ -45,8 +45,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BackTrackSolver.cs" />
-    <Compile Include="CheckButton.cs" />
-    <Compile Include="Constraints.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

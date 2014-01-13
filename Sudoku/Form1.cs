@@ -32,6 +32,7 @@ namespace Sudoku
         {
             currButton = new Button();
             buttons = new List<List<List<List<Button>>>>();
+
             List<List<List<Button>>> buttonsRow = new List<List<List<Button>>>();
             List<List<Button>> buttonSquare = new List<List<Button>>();
             List<Button> buttonSquareRow = new List<Button>();
@@ -47,6 +48,10 @@ namespace Sudoku
             ToolStripMenuItem newGame = new ToolStripMenuItem("&New Game", null, new EventHandler(OnNewGame));
             ToolStripMenuItem solve = new ToolStripMenuItem("&Solve", null, new EventHandler(OnSolve));
 
+            exit.ShortcutKeys = Keys.Alt | Keys.F4;
+            newGame.ShortcutKeys = Keys.F2;
+            solve.ShortcutKeys = Keys.F3;
+
             file.DropDownItems.Add(newGame);
             file.DropDownItems.Add(solve);
             file.DropDownItems.Add(exit);
@@ -55,6 +60,10 @@ namespace Sudoku
             MainMenuStrip = ms;
 
             InitializeComponent();
+            this.BackColor = Color.Black;
+            this.MaximizeBox = false;
+            this.Text = "Sudoku Solver";
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
 
             rsL.Add("ABC");
             rsL.Add("DEF");
@@ -71,12 +80,14 @@ namespace Sudoku
                     {
                         for (int k = 0; k < 3; k++)
                         {
-                            tempButton.Location = new Point((k * 40 + (i * 40 * 3)) + i * 5, (35 + j * 40 + (l * 40 * 3)) + l * 5);
+                            tempButton.Location = new Point((5 + k * 40 + (i * 40 * 3)) + i * 5, (35 + j * 40 + (l * 40 * 3)) + l * 5);
                             tempButton.Size = new Size(40, 40);
                             tempButton.Parent = this;
                             tempButton.Click += new EventHandler(button_click);
                             tempButton.Name = rsL[l][j].ToString() + csL[i][k].ToString();
                             tempButton.Text = "";
+                            tempButton.BackColor = Color.White;
+                            tempButton.Font = new Font("Arial", 10, FontStyle.Regular);
                             buttonSquareRow.Add(tempButton);
                             tempButton = new Button();
                         }
@@ -99,7 +110,7 @@ namespace Sudoku
             currButton = new Button();
             Button btn = (Button)sender;
             currButton = btn;
-            oldButton.BackColor = Color.Transparent;
+            oldButton.BackColor = Color.White;
             currButton.BackColor = Color.Red;
         }
 
@@ -114,6 +125,7 @@ namespace Sudoku
                         for (int k = 0; k < 3; k++)
                         {
                             buttons[l][i][j][k].Text = "";
+                            buttons[l][i][j][k].Font = new Font("Arial", 10, FontStyle.Regular);
                         }
                     }
                 }
@@ -152,22 +164,28 @@ namespace Sudoku
                 currButton.Text = "9";
             else if (keyData == Keys.Back)
                 currButton.Text = "";
+            currButton.Font = new Font("Arial", 10, FontStyle.Bold);
             return true;
         }
         
         #endregion
 
-        #region Backtracking and solving
+        #region Backtracking and Solving
         void solve()
         {
             BackTrackSolver BTS = new BackTrackSolver();
-            setButtons(BTS.solve(buttons));
-            MessageBox.Show("Solve DONE!");
+            if (setButtons(BTS.solve(buttons)))
+                MessageBox.Show("Solve success!");
+            else
+                MessageBox.Show("Unsolvable problem!");
         }
 
-        void setButtons(Dictionary<string, string> values) 
+        bool setButtons(Dictionary<string, string> values) 
         {
             bool breakFlag = new bool();
+
+            if (values.Count == 0)
+                return false;
 
             foreach (string key in values.Keys)
             {
@@ -197,6 +215,7 @@ namespace Sudoku
                         break;
                 }
             }
+            return true;
         }
         #endregion
     }

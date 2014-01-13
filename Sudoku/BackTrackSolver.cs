@@ -14,15 +14,18 @@ namespace Sudoku
 {
     class BackTrackSolver
     {
+        #region Private Variables
         private string digits;
         private string rows;
         private string cols;
         private List<string> squares;
         private Dictionary<string, List<List<string>>> units;
         private Dictionary<string, List<string>> peers;
-        private Dictionary<string, string> values;
+        private Dictionary<string, string> values; 
+        #endregion
 
-        public BackTrackSolver() 
+        #region Public Methods
+        public BackTrackSolver()
         {
             List<List<string>> unitList = new List<List<string>>();
             List<string> rsL = new List<string>();
@@ -72,9 +75,9 @@ namespace Sudoku
                 tempStrListD = new List<List<string>>();
             }
             bool breakFlag = new bool();
-            foreach (string s in squares) 
+            foreach (string s in squares)
             {
-                foreach (List<string> u in units[s]) 
+                foreach (List<string> u in units[s])
                 {
                     foreach (string uElem in u)
                     {
@@ -89,7 +92,7 @@ namespace Sudoku
                                         breakFlag = true;
                                         break;
                                     }
-                                if(!breakFlag)
+                                if (!breakFlag)
                                     tempStrList.Add(uElem);
                             }
                             else
@@ -102,14 +105,15 @@ namespace Sudoku
             }
         }
 
-        public Dictionary<string, string> solve(List<List<List<List<Button>>>> buttons) 
+        public Dictionary<string, string> solve(List<List<List<List<Button>>>> buttons)
         {
             parse_grid(buttons);
             Dictionary<string, string> value_copy = new Dictionary<string, string>(values);
             return search(value_copy);
-        }
+        } 
+        #endregion
 
-        #region Private methods
+        #region Private Methods
 
         private Dictionary<string, string> search(Dictionary<string, string> values) 
         {
@@ -194,9 +198,12 @@ namespace Sudoku
         {
             string lastVal = "";
             List<string> keyPlaces = new List<string>();
+
             if (!values[key].Contains(value))
                 return values;
+
             values[key] = values[key].Replace(value, "");
+
             if(values[key].Count() == 0)
                 return new Dictionary<string,string>();
             else if (values[key].Count() == 1)
@@ -227,20 +234,20 @@ namespace Sudoku
         private List<string> cross(char a, string B)
         {
             List<string> returnList = new List<string>();
+
             foreach (char b in B)
-            {
                 returnList.Add(a.ToString() + b.ToString());
-            }
+
             return returnList;
         }
 
         private List<string> cross(string A, char b)
         {
             List<string> returnList = new List<string>();
+
             foreach (char a in A)
-            {
                 returnList.Add(a.ToString() + b.ToString());
-            }
+
             return returnList;
         }
 
@@ -250,10 +257,9 @@ namespace Sudoku
             foreach (char a in A)
             {
                 foreach (char b in B)
-                {
                     returnList.Add(a.ToString() + b.ToString());
-                }
             }
+
             return returnList;
         } 
         #endregion
