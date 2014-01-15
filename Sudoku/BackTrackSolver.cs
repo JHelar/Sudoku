@@ -110,7 +110,31 @@ namespace Sudoku
             parse_grid(buttons);
             Dictionary<string, string> value_copy = new Dictionary<string, string>(values);
             return search(value_copy);
-        } 
+        }
+
+        public bool parse_grid(List<List<List<List<Button>>>> buttons)
+        {
+            foreach (string s in squares)
+                values[s] = digits;
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                for (int j = 0; j < buttons[i].Count; j++)
+                {
+                    for (int k = 0; k < buttons[i][j].Count; k++)
+                    {
+                        for (int l = 0; l < buttons[i][j][k].Count; l++)
+                        {
+                            if (buttons[i][j][k][l].Text != "")
+                            {
+                                if (assign(this.values, buttons[i][j][k][l].Name, buttons[i][j][k][l].Text).Count == 0)
+                                    return false;
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
         #endregion
 
         #region Private Methods
@@ -157,30 +181,6 @@ namespace Sudoku
             else
                 return values;
         } 
-
-        private bool parse_grid(List<List<List<List<Button>>>> buttons)
-        {
-            foreach (string s in squares)
-                values[s] = digits;
-            for (int i = 0; i < buttons.Count; i++)
-            {
-                for (int j = 0; j < buttons[i].Count; j++)
-                {
-                    for (int k = 0; k < buttons[i][j].Count; k++)
-                    {
-                        for (int l = 0; l < buttons[i][j][k].Count; l++)
-                        {
-                            if (buttons[i][j][k][l].Text != "")
-                            {
-                                if (assign(this.values, buttons[i][j][k][l].Name, buttons[i][j][k][l].Text).Count == 0)
-                                    return false;
-                            }
-                        }
-                    }
-                }
-            }
-            return true;
-        }
 
         private Dictionary<string, string> assign(Dictionary<string, string> values,string key, string value) 
         {
