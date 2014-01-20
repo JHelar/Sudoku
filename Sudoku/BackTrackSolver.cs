@@ -20,8 +20,13 @@ namespace Sudoku
         private string cols;
         private List<string> squares;
         private Dictionary<string, List<List<string>>> units;
+        private Dictionary<string, string> values;
         private Dictionary<string, List<string>> peers;
-        private Dictionary<string, string> values; 
+
+        public Dictionary<string, List<string>> Peers() 
+        {
+            return this.peers;
+        }
         #endregion
 
         #region Public Methods
@@ -107,12 +112,10 @@ namespace Sudoku
 
         public Dictionary<string, string> solve(List<List<List<List<Button>>>> buttons)
         {
-            parse_grid(buttons);
-            Dictionary<string, string> value_copy = new Dictionary<string, string>(values);
-            return search(value_copy);
+            return search(new Dictionary<string, string>(parse_grid(buttons)));
         }
 
-        public bool parse_grid(List<List<List<List<Button>>>> buttons)
+        public Dictionary<string, string> parse_grid(List<List<List<List<Button>>>> buttons)
         {
             foreach (string s in squares)
                 values[s] = digits;
@@ -127,13 +130,13 @@ namespace Sudoku
                             if (buttons[i][j][k][l].Text != "")
                             {
                                 if (assign(this.values, buttons[i][j][k][l].Name, buttons[i][j][k][l].Text).Count == 0)
-                                    return false;
+                                    return new Dictionary<string,string>();
                             }
                         }
                     }
                 }
             }
-            return true;
+            return this.values;
         }
         #endregion
 

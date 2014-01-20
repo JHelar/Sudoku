@@ -25,16 +25,24 @@ namespace Sudoku
     public partial class MainForm : Form
     {
         List<List<List<List<Button>>>> buttons;
+        Dictionary<string, string> solution;
         Button currButton;
         Button oldButton;
         Form newGameForm;
+        RadioButton prevRbtn;
+        ToolTip TT;
         string difficulty;
+        bool newGameTrigger;
 
         public MainForm()
         {
+            TT = new ToolTip();
             currButton = new Button();
             buttons = new List<List<List<List<Button>>>>();
             newGameForm = new Form();
+            newGameTrigger = new bool();
+            newGameTrigger = false;
+            prevRbtn = new RadioButton();
 
             List<List<List<Button>>> buttonsRow = new List<List<List<Button>>>();
             List<List<Button>> buttonSquare = new List<List<Button>>();
@@ -42,7 +50,8 @@ namespace Sudoku
             Button tempButton = new Button();
             List<string> rsL = new List<string>();
             List<string> csL = new List<string>();
-            
+
+            RadioButton superEasy = new RadioButton();
             RadioButton easy = new RadioButton();
             RadioButton normal = new RadioButton();
             RadioButton hard = new RadioButton();
@@ -83,20 +92,29 @@ namespace Sudoku
             newGameForm.MinimizeBox = false;
             newGameForm.Hide();
 
+            superEasy.Parent = newGameForm;
+            superEasy.Location = new Point(30, 20);
+            superEasy.Text = "Super easy";
+            superEasy.Click += new EventHandler(OnCheck);
+            superEasy.MouseHover += new EventHandler(OnHover);
+
             easy.Parent = newGameForm;
-            easy.Location = new Point(30, 20);
+            easy.Location = new Point(30, 40);
             easy.Text = "Easy";
             easy.Click += new EventHandler(OnCheck);
+            easy.MouseHover += new EventHandler(OnHover);
 
             normal.Parent = newGameForm;
-            normal.Location = new Point(30, 40);
+            normal.Location = new Point(30, 60);
             normal.Text = "Normal";
             normal.Click += new EventHandler(OnCheck);
+            normal.MouseHover += new EventHandler(OnHover);
 
             hard.Parent = newGameForm;
-            hard.Location = new Point(30, 60);
+            hard.Location = new Point(30, 80);
             hard.Text = "Hard";
             hard.Click += new EventHandler(OnCheck);
+            hard.MouseHover += new EventHandler(OnHover);
 
             ok.Parent = newGameForm;
             ok.Location = new Point(20, 120);
@@ -157,9 +175,40 @@ namespace Sudoku
             currButton.BackColor = Color.LightPink;
         }
 
+        void OnHover(object sender, EventArgs e) 
+        {
+            TT.BackColor = Color.White;
+            TT.ForeColor = Color.Black;
+            TT.Active = true;
+            RadioButton rbtn = (RadioButton)sender;
+
+            if (rbtn.Text == "Super easy" && prevRbtn != rbtn)
+            {
+                TT.Hide(newGameForm);
+                TT.Show("Sets a new game of sudoku with 5+/- predetermined numbers in each 3x3 square. Also indicates if a given number is a valid number", newGameForm, new Point(60, 30));
+            }
+            else if (rbtn.Text == "Easy")
+            {
+                TT.Hide(newGameForm);
+                TT.Show("Sets a new game of sudoku with 5+/- predetermined numbers in each 3x3 square.", newGameForm, new Point(60, 50));
+            }
+            else if (rbtn.Text == "Normal")
+            {
+                TT.Hide(newGameForm);
+                TT.Show("Sets a new game of sudoku with 3+/- predetermined numbers in each 3x3 square.", newGameForm, new Point(60, 70));
+            }
+            else if (rbtn.Text == "Hard")
+            {
+                TT.Hide(newGameForm);
+                TT.Show("Sets a new game of sudoku with 2+/- predetermined numbers in each 3x3 square.", newGameForm, new Point(60, 90));
+            }
+            prevRbtn = rbtn;
+        }
+
         void OnNewGame(object sender, EventArgs e)
         {
             newGameForm.Show();
+            newGameTrigger = true;
 
             for (int l = 0; l < 3; l++)
             {
@@ -193,11 +242,13 @@ namespace Sudoku
         void OnCancel(object sender, EventArgs e) 
         {
             newGameForm.Hide();
+            newGameTrigger = false;
             return;
         }
 
         void OnClean(object sender, EventArgs e) 
         {
+            newGameTrigger = false;
             for (int l = 0; l < 3; l++)
             {
                 for (int i = 0; i < 3; i++)
@@ -251,29 +302,47 @@ namespace Sudoku
                 currButton.Text = "";
             currButton.Font = new Font("Arial", 10, FontStyle.Bold);
             currButton.ForeColor = Color.Black;
+            if (difficulty == "Super easy")
+                assistant();
             return true;
         }
         
         #endregion
 
-        #region Backtracking and Solving
+        #region Backtracking, Solving and help
+        void assistant() 
+        {
+            BackTrackSolver BTS = new BackTrackSolver();
+            for(int i = 0; i < buttons.Count; i++)
+                for(int j = 0; j < buttons[i].Count; j++)
+                    for(int k = 0; k < buttons[i][j].Count; k++)
+                        for (int l = 0; l < buttons[i][j][k].Count; l++) 
+                        {
+                            if (BTS.Peers()[currButton.Name].Contains(buttons[i][j][k][l].Name))
+                                if (buttons[i][j][k][l].Text == currButton.Text)
+                                    currButton.ForeColor = Color.Red;
+                        }
+        }
         void solve(string difficulty) 
         {
             BackTrackSolver BTS = new BackTrackSolver();
             Random randN = new Random();
             Random rand = new Random();
+
+            solution = new Dictionary<string, string>();
             
             int col = 0;
             int row = 0;
 
             bool done = new bool();
             done = false;
-            if (difficulty == "Easy")
+            if (difficulty == "Easy" || difficulty == "Super easy")
             {
                 while (!done)
                 {
                     buttons[rand.Next(0, 3)][rand.Next(0, 3)][rand.Next(0, 3)][rand.Next(0, 3)].Text = randN.Next(1, 10).ToString();
-                    done = setButtons(BTS.solve(buttons));
+                    solution = BTS.solve(buttons);
+                    done = setButtons(solution);
                 }
                 for (int i = 0; i < buttons.Count; i++) 
                 {
@@ -294,7 +363,8 @@ namespace Sudoku
                 while (!done)
                 {
                     buttons[rand.Next(0, 3)][rand.Next(0, 3)][rand.Next(0, 3)][rand.Next(0, 3)].Text = randN.Next(1, 10).ToString();
-                    done = setButtons(BTS.solve(buttons));
+                    solution = BTS.solve(buttons);
+                    done = setButtons(solution);
                 }
                 for (int i = 0; i < buttons.Count; i++)
                 {
@@ -315,7 +385,8 @@ namespace Sudoku
                 while (!done)
                 {
                     buttons[rand.Next(0, 3)][rand.Next(0, 3)][rand.Next(0, 3)][rand.Next(0, 3)].Text = randN.Next(1, 10).ToString();
-                    done = setButtons(BTS.solve(buttons));
+                    solution = BTS.solve(buttons);
+                    done = setButtons(solution);
                 }
                 for (int i = 0; i < buttons.Count; i++)
                 {
@@ -353,7 +424,12 @@ namespace Sudoku
         void solve()
         {
             BackTrackSolver BTS = new BackTrackSolver();
-            if (setButtons(BTS.solve(buttons)))
+            if (newGameTrigger)
+            {
+                setButtons(solution);
+                MessageBox.Show("Solve done, you cheater!");
+            }
+            else if (setButtons(BTS.solve(buttons)))
                 MessageBox.Show("Solve success!");
             else
                 MessageBox.Show("Unsolvable problem!");
